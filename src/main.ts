@@ -191,6 +191,8 @@ interface YamlOverlay {
 interface YamlOptions {
   image?: string;
   imageVar?: string;
+  imageBasesVar?: string;
+  imageOverlaysVar?: string;
   markers?: string;
   minZoom?: number | string;
   maxZoom?: number | string;
@@ -574,7 +576,72 @@ export default class ZoomMapPlugin extends Plugin {
         }
 
         const yamlBases = parseBasesYaml(opts.imageBases);
+        if (yamlBases.length === 0 && typeof opts.imageBasesVar === "string" && opts.imageBasesVar.trim()) {
+          // Read imageBases from a named frontmatter key.
+          // The frontmatter value may be a single object or array of objects with { path, name }
+          // or plain strings/wiki-links.
+          const fmKey = opts.imageBasesVar.trim();
+          const noteFile = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
+          if (noteFile instanceof TFile) {
+            const fm = this.app.metadataCache.getFileCache(noteFile)?.frontmatter;
+            const fmVal = fm?.[fmKey];
+            const stripBrackets = (s: string): string => {
+              const t = s.trim();
+              return t.startsWith("[[") && t.endsWith("]]") ? t.slice(2, -2).trim() : t;
+            };
+            const parseEntry = (item: unknown): void => {
+              if (typeof item === "string" && item.trim()) {
+                yamlBases.push({ path: stripBrackets(item) });
+              } else if (item && typeof item === "object" && "path" in item) {
+                const obj = item as { path?: unknown; name?: unknown };
+                if (typeof obj.path === "string" && obj.path.trim()) {
+                  yamlBases.push({
+                    path: stripBrackets(obj.path),
+                    name: typeof obj.name === "string" ? obj.name.trim() || undefined : undefined,
+                  });
+                }
+              }
+            };
+            if (Array.isArray(fmVal)) {
+              for (const item of fmVal) parseEntry(item);
+            } else {
+              parseEntry(fmVal);
+            }
+          }
+        }
         const yamlOverlays = parseOverlaysYaml(opts.imageOverlays);
+        if (yamlOverlays.length === 0 && typeof opts.imageOverlaysVar === "string" && opts.imageOverlaysVar.trim()) {
+          // Read imageOverlays from a named frontmatter key.
+          const fmKey = opts.imageOverlaysVar.trim();
+          const noteFile = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
+          if (noteFile instanceof TFile) {
+            const fm = this.app.metadataCache.getFileCache(noteFile)?.frontmatter;
+            const fmVal = fm?.[fmKey];
+            const stripBrackets = (s: string): string => {
+              const t = s.trim();
+              return t.startsWith("[[") && t.endsWith("]]") ? t.slice(2, -2).trim() : t;
+            };
+            const parseEntry = (item: unknown): void => {
+              if (typeof item === "string" && item.trim()) {
+                yamlOverlays.push({ path: stripBrackets(item) });
+              } else if (item && typeof item === "object" && "path" in item) {
+                const obj = item as { path?: unknown; name?: unknown; visible?: unknown };
+                if (typeof obj.path === "string" && obj.path.trim()) {
+                  yamlOverlays.push({
+                    path: stripBrackets(obj.path),
+                    name: typeof obj.name === "string" ? obj.name.trim() || undefined : undefined,
+                    visible: typeof obj.visible === "boolean" ? obj.visible : undefined,
+                  });
+                }
+              }
+            };
+            if (Array.isArray(fmVal)) {
+              for (const item of fmVal) parseEntry(item);
+            } else {
+              parseEntry(fmVal);
+            }
+          }
+        }
         const yamlMetersPerPixel = parseScaleYaml(opts.scale);
         const yamlFrameInsets = parseFrameInsetsYaml(opts.viewportFrameInsets);
 		
