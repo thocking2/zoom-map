@@ -156,7 +156,7 @@ imageBases:
     name: Base B
 
 imageBasesVar: string
-name of the front matter field containing the list of imageBases (list of paths or list of objects (path and names)
+  - name of the front matter field containing the list of imageBases. The front matter can be in the form of a list of paths or list of objects (path and names)
 
 imageOverlays:
   - path: Assets/overlay-roads.png
@@ -167,7 +167,7 @@ imageOverlays:
     visible: false
 
 imageOverlaysVar: string
-name of the front matter field containing the list of imageOverlays (list of paths or list of objects (path and names)
+  - name of the front matter field containing the list of imageOverlays. The front matter can be in the form of a list of paths or list of objects (path and names)
 
 ### Scale / calibration
 - scale:
