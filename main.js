@@ -17268,7 +17268,7 @@ var ZoomMapPlugin = class extends import_obsidian26.Plugin {
     this.registerMarkdownCodeBlockProcessor(
       "zoommap",
       async (src, el, ctx) => {
-        var _a, _b, _c, _d;
+        var _a, _b, _c, _d, _e;
         let opts = {};
         try {
           const parsed = (0, import_obsidian26.parseYaml)(src);
@@ -17313,16 +17313,26 @@ var ZoomMapPlugin = class extends import_obsidian26.Plugin {
         const yamlRender = typeof opts.render === "string" ? opts.render.trim().toLowerCase() : "";
         const renderMode = yamlRender === "canvas" ? "canvas" : yamlRender === "dom" ? "dom" : preferCanvas ? "canvas" : "dom";
         let image = typeof opts.image === "string" ? opts.image.trim() : "";
+        if (!image) {
+          const noteFile = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
+          if (noteFile instanceof import_obsidian26.TFile) {
+            const fm = (_a = this.app.metadataCache.getFileCache(noteFile)) == null ? void 0 : _a.frontmatter;
+            const fmImage = fm == null ? void 0 : fm.image;
+            if (typeof fmImage === "string" && fmImage.trim()) {
+              image = fmImage.trim();
+            }
+          }
+        }
         if (!image && yamlBases.length > 0) image = yamlBases[0].path;
         if (!image) {
           el.createEl("div", { text: "Image is missing." });
           return;
         }
-        const responsive = !!((_a = opts.responsive) != null ? _a : opts.responsiv);
+        const responsive = !!((_b = opts.responsive) != null ? _b : opts.responsiv);
         const storageRaw = typeof opts.storage === "string" ? opts.storage.toLowerCase() : "";
-        const storageMode = storageRaw === "note" || storageRaw === "inline" || storageRaw === "in-note" ? "note" : storageRaw === "json" ? "json" : (_b = this.settings.storageDefault) != null ? _b : "json";
+        const storageMode = storageRaw === "note" || storageRaw === "inline" || storageRaw === "in-note" ? "note" : storageRaw === "json" ? "json" : (_c = this.settings.storageDefault) != null ? _c : "json";
         const sectionInfo = ctx.getSectionInfo(el);
-        const defaultId = `map-${(_c = sectionInfo == null ? void 0 : sectionInfo.lineStart) != null ? _c : Date.now()}`;
+        const defaultId = `map-${(_d = sectionInfo == null ? void 0 : sectionInfo.lineStart) != null ? _d : Date.now()}`;
         const idFromYaml = opts.id;
         const mapId = typeof idFromYaml === "string" && idFromYaml.trim() ? idFromYaml.trim() : defaultId;
         const markersPathRaw = typeof opts.markers === "string" ? opts.markers : void 0;
@@ -17338,7 +17348,7 @@ var ZoomMapPlugin = class extends import_obsidian26.Plugin {
         const widthFromYaml = Object.prototype.hasOwnProperty.call(opts, "width");
         const heightFromYaml = Object.prototype.hasOwnProperty.call(opts, "height");
         const extSettings = this.settings;
-        const widthDefault = wrap ? (_d = extSettings.defaultWidthWrapped) != null ? _d : "50%" : this.settings.defaultWidth;
+        const widthDefault = wrap ? (_e = extSettings.defaultWidthWrapped) != null ? _e : "50%" : this.settings.defaultWidth;
         let widthCss = responsive ? "100%" : toCssSize(opts.width, widthDefault);
         let heightCss = responsive ? "auto" : toCssSize(opts.height, this.settings.defaultHeight);
         if (!responsive && storageMode === "json" && !widthFromYaml && !heightFromYaml) {

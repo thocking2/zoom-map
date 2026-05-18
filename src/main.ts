@@ -633,6 +633,17 @@ export default class ZoomMapPlugin extends Plugin {
           : "dom";
 
         let image = typeof opts.image === "string" ? opts.image.trim() : "";
+        if (!image) {
+          // Fall back to the `image` frontmatter field of the current note.
+          const noteFile = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
+          if (noteFile instanceof TFile) {
+            const fm = this.app.metadataCache.getFileCache(noteFile)?.frontmatter;
+            const fmImage = fm?.image;
+            if (typeof fmImage === "string" && fmImage.trim()) {
+              image = fmImage.trim();
+            }
+          }
+        }
         if (!image && yamlBases.length > 0) image = yamlBases[0].path;
         if (!image) {
           el.createEl("div", { text: "Image is missing." });
