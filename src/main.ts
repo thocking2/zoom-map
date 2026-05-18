@@ -190,6 +190,7 @@ interface YamlOverlay {
 
 interface YamlOptions {
   image?: string;
+  imageVar?: string;
   markers?: string;
   minZoom?: number | string;
   maxZoom?: number | string;
@@ -633,14 +634,16 @@ export default class ZoomMapPlugin extends Plugin {
           : "dom";
 
         let image = typeof opts.image === "string" ? opts.image.trim() : "";
-        if (!image) {
-          // Fall back to the `image` frontmatter field of the current note.
+        if (!image && typeof opts.imageVar === "string" && opts.imageVar.trim()) {
+          // `imageVar` names a frontmatter key to read the image path from.
+          const fmKey = opts.imageVar.trim();
           const noteFile = this.app.vault.getAbstractFileByPath(ctx.sourcePath);
           if (noteFile instanceof TFile) {
             const fm = this.app.metadataCache.getFileCache(noteFile)?.frontmatter;
-            const fmImage = fm?.image;
+            const fmImage = fm?.[fmKey];
             if (typeof fmImage === "string" && fmImage.trim()) {
-              image = fmImage.trim();
+              const raw = fmImage.trim();
+              image = raw.startsWith("[[") && raw.endsWith("]]") ? raw.slice(2, -2).trim() : raw;
             }
           }
         }
